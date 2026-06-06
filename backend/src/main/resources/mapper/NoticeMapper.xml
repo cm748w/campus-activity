@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.campusactivity.mapper.NoticeMapper">
+
+    <!-- 分页查询公告列表 -->
+    <select id="selectNoticePage" resultType="com.example.campusactivity.entity.Notice">
+        SELECT * FROM notice
+        WHERE deleted = 0
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (title LIKE CONCAT('%', #{keyword}, '%')
+            OR content LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY top DESC, create_time DESC
+    </select>
+
+    <!-- 查询最新公告列表 -->
+    <select id="selectLatestNotices" resultType="com.example.campusactivity.entity.Notice">
+        SELECT * FROM notice
+        WHERE deleted = 0
+        AND status = 1
+        ORDER BY top DESC, create_time DESC
+    </select>
+
+</mapper>

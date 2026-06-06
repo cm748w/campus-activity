@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.campusactivity.mapper.RegistrationMapper">
+
+    <resultMap id="RegistrationResultMap" type="com.example.campusactivity.entity.Registration">
+        <id column="id" property="id"/>
+        <result column="activity_id" property="activityId"/>
+        <result column="user_id" property="userId"/>
+        <result column="real_name" property="realName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="phone" property="phone"/>
+        <result column="department" property="department"/>
+        <result column="remark" property="remark"/>
+        <result column="status" property="status"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="register_time" property="registerTime"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="audit_by" property="auditBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <!-- 关联活动信息 -->
+        <association property="activity" javaType="com.example.campusactivity.entity.Activity">
+            <id column="activity_id" property="id"/>
+            <result column="act_title" property="title"/>
+            <result column="act_location" property="location"/>
+            <result column="act_start_time" property="startTime"/>
+            <result column="act_end_time" property="endTime"/>
+            <result column="act_status" property="status"/>
+        </association>
+    </resultMap>
+
+    <!-- 分页查询活动的报名列表 -->
+    <select id="selectRegistrationPage" resultMap="RegistrationResultMap">
+        SELECT r.*,
+               a.title as act_title, a.location as act_location,
+               a.start_time as act_start_time, a.end_time as act_end_time, a.status as act_status
+        FROM registration r
+        INNER JOIN activity a ON r.activity_id = a.id
+        WHERE r.deleted = 0
+        AND r.activity_id = #{activityId}
+        <if test="status != null">
+            AND r.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (r.real_name LIKE CONCAT('%', #{keyword}, '%')
+            OR r.student_no LIKE CONCAT('%', #{keyword}, '%')
+            OR r.phone LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY r.register_time DESC
+    </select>
+
+    <!-- 查询用户的报名列表（带活动信息） -->
+    <select id="selectUserRegistrations" resultMap="RegistrationResultMap">
+        SELECT r.*,
+               a.title as act_title, a.location as act_location,
+               a.start_time as act_start_time, a.end_time as act_end_time, a.status as act_status
+        FROM registration r
+        INNER JOIN activity a ON r.activity_id = a.id
+        WHERE r.deleted = 0
+        AND r.user_id = #{userId}
+        <if test="status != null">
+            AND r.status = #{status}
+        </if>
+        ORDER BY r.register_time DESC
+    </select>
+
+    <!-- 根据活动ID和用户ID查询报名记录 -->
+    <select id="selectByActivityAndUser" resultType="com.example.campusactivity.entity.Registration">
+        SELECT * FROM registration
+        WHERE activity_id = #{activityId}
+        AND user_id = #{userId}
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- 导出报名成功名单 -->
+    <select id="selectApprovedList" resultType="com.example.campusactivity.entity.Registration">
+        SELECT r.* FROM registration r
+        WHERE r.activity_id = #{activityId}
+        AND r.status = 1
+        AND r.deleted = 0
+        ORDER BY r.register_time ASC
+    </select>
+
+</mapper>

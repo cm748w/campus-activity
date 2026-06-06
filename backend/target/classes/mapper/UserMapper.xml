@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.campusactivity.mapper.UserMapper">
+
+    <!-- 分页查询用户列表（带角色信息） -->
+    <select id="selectUserPage" resultType="com.example.campusactivity.entity.User">
+        SELECT DISTINCT u.*, r.role_code, r.role_name
+        FROM user u
+        LEFT JOIN user_role ur ON u.id = ur.user_id
+        LEFT JOIN role r ON ur.role_id = r.id
+        WHERE u.deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (u.username LIKE CONCAT('%', #{keyword}, '%')
+            OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
+            OR u.department LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="roleCode != null and roleCode != ''">
+            AND r.role_code = #{roleCode}
+        </if>
+        ORDER BY u.create_time DESC
+    </select>
+
+</mapper>
