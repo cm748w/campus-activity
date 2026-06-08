@@ -42,6 +42,15 @@ public interface ActivityMapper extends BaseMapper<Activity> {
     Activity selectActivityById(@Param("id") Long id, @Param("userId") Long userId);
 
     /**
+     * 使用行级锁查询活动（用于并发场景）
+     * 确保在并发报名时不会出现超卖
+     * @param activityId 活动ID
+     * @return 活动信息（带行级锁保护）
+     */
+    @Select("SELECT * FROM activity WHERE id = #{activityId} FOR UPDATE")
+    Activity selectForUpdate(@Param("activityId") Long activityId);
+
+    /**
      * 增加报名人数
      * @param activityId 活动ID
      * @return 影响行数

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 
 /**
@@ -30,24 +31,31 @@ public class Activity {
     /**
      * 活动标题
      */
+    @NotBlank(message = "活动标题不能为空")
+    @Size(min = 2, max = 200, message = "活动标题长度需要2-200个字符")
     @Schema(description = "活动标题")
     private String title;
 
     /**
      * 活动详情描述
      */
+    @NotBlank(message = "活动详情不能为空")
+    @Size(min = 10, max = 2000, message = "活动详情长度需要10-2000个字符")
     @Schema(description = "活动详情")
     private String description;
 
     /**
      * 活动地点
      */
+    @NotBlank(message = "活动地点不能为空")
+    @Size(min = 2, max = 200, message = "活动地点长度需要2-200个字符")
     @Schema(description = "活动地点")
     private String location;
 
     /**
      * 活动开始时间
      */
+    @NotNull(message = "活动开始时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "活动开始时间")
     private LocalDateTime startTime;
@@ -55,6 +63,7 @@ public class Activity {
     /**
      * 活动结束时间
      */
+    @NotNull(message = "活动结束时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "活动结束时间")
     private LocalDateTime endTime;
@@ -62,6 +71,7 @@ public class Activity {
     /**
      * 报名开始时间
      */
+    @NotNull(message = "报名开始时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "报名开始时间")
     private LocalDateTime registerStart;
@@ -69,6 +79,7 @@ public class Activity {
     /**
      * 报名截止时间
      */
+    @NotNull(message = "报名截止时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "报名截止时间")
     private LocalDateTime registerEnd;
@@ -76,6 +87,9 @@ public class Activity {
     /**
      * 人数上限（0表示不限）
      */
+    @NotNull(message = "人数上限不能为空")
+    @Min(value = 0, message = "人数上限不能为负数")
+    @Max(value = 100000, message = "人数上限不能超过100000")
     @Schema(description = "人数上限（0表示不限）")
     private Integer maxParticipants;
 
@@ -106,6 +120,7 @@ public class Activity {
     /**
      * 活动类型
      */
+    @NotBlank(message = "活动类型不能为空")
     @Schema(description = "活动类型（学术/文体/志愿/社团/其他）")
     private String activityType;
 

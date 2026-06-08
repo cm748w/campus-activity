@@ -49,8 +49,8 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
             throw new BusinessException(401, "请先登录");
         }
 
-        // 查询活动
-        Activity activity = activityMapper.selectById(activityId);
+        // 使用行级锁查询活动，确保并发安全
+        Activity activity = activityMapper.selectForUpdate(activityId);
         if (activity == null) {
             throw new BusinessException(404, "活动不存在");
         }
@@ -68,8 +68,13 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         if (now.isAfter(activity.getRegisterEnd())) {
             return Result.error("报名已截止");
         }
+        
+        // 检查活动是否已结束
+        if (now.isAfter(activity.getEndTime())) {
+            return Result.error("活动已结束，无法报名");
+        }
 
-        // 检查人数上限
+        // 检查人数上限（在锁保护下进行）
         if (activity.getMaxParticipants() > 0 && 
             activity.getCurrentParticipants() >= activity.getMaxParticipants()) {
             return Result.error("该活动报名人数已满");
@@ -103,7 +108,7 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
 
         save(registration);
 
-        // 增加报名人数（乐观锁）
+        // 增加报名人数（在行级锁保护下，确保原子性）
         int result = activityMapper.incrementParticipants(activityId);
         if (result == 0) {
             throw new BusinessException("报名失败，人数已满");
@@ -199,6 +204,11 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
         Activity activity = activityMapper.selectById(activityId);
         if (activity == null) {
             throw new BusinessException(404, "活动不存在");
+        }
+        
+        // 检查活动是否已删除
+        if (activity.getDeleted() != null && activity.getDeleted() == 1) {
+            throw new BusinessException(404, "活动已被删除");
         }
 
         if (!activity.getOrganizerId().equals(currentUser.getId()) && !"admin".equals(currentUser.getRoleCode())) {

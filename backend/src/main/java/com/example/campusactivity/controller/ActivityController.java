@@ -7,6 +7,7 @@ import com.example.campusactivity.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class ActivityController {
      */
     @PostMapping("/publish")
     @Operation(summary = "发布活动", description = "负责人发布新活动，提交后等待管理员审核")
-    public Result<Void> publishActivity(@RequestBody Activity activity) {
+    public Result<Void> publishActivity(@Valid @RequestBody Activity activity) {
         return activityService.publishActivity(activity);
     }
 
@@ -43,7 +44,7 @@ public class ActivityController {
     @Operation(summary = "更新活动", description = "负责人更新自己发布的活动信息")
     public Result<Void> updateActivity(
             @Parameter(description = "活动ID") @PathVariable Long activityId,
-            @RequestBody Activity activity) {
+            @Valid @RequestBody Activity activity) {
         activity.setId(activityId);
         return activityService.updateActivity(activity);
     }

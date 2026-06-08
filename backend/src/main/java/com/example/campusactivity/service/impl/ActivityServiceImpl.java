@@ -43,10 +43,29 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             throw new BusinessException(401, "请先登录");
         }
 
+        // 验证时间逻辑
+        if (activity.getRegisterStart() == null || activity.getRegisterEnd() == null || 
+            activity.getStartTime() == null || activity.getEndTime() == null) {
+            throw new BusinessException("请填写所有时间字段");
+        }
+        
+        if (!activity.getRegisterStart().isBefore(activity.getRegisterEnd())) {
+            throw new BusinessException("报名开始时间必须早于报名结束时间");
+        }
+        
+        if (!activity.getRegisterEnd().isBefore(activity.getStartTime()) && 
+            !activity.getRegisterEnd().isEqual(activity.getStartTime())) {
+            throw new BusinessException("报名结束时间不能晚于活动开始时间");
+        }
+        
+        if (!activity.getStartTime().isBefore(activity.getEndTime())) {
+            throw new BusinessException("活动开始时间必须早于结束时间");
+        }
+
         // 设置发布人信息
         activity.setOrganizerId(currentUser.getId());
         activity.setOrganizerName(currentUser.getRealName());
-        activity.setOrganizerContact(currentUser.getPhone());
+        activity.setOrganizerContact(currentUser.getPhone() != null ? currentUser.getPhone() : "");
         activity.setCurrentParticipants(0);
         
         // 默认状态为待审核（需要管理员审核后才能发布）
@@ -82,6 +101,11 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         // 已结束或已取消的活动不能修改
         if (oldActivity.getStatus() == 4 || oldActivity.getStatus() == 5) {
             return Result.error("已结束或已取消的活动不能修改");
+        }
+
+        // 检查新的人数限制是否小于已报名人数
+        if (activity.getMaxParticipants() > 0 && activity.getMaxParticipants() < oldActivity.getCurrentParticipants()) {
+            return Result.error("新的人数上限(" + activity.getMaxParticipants() + ")不能小于已报名人数(" + oldActivity.getCurrentParticipants() + ")");
         }
 
         // 更新后状态重置为待审核
@@ -182,8 +206,8 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             activity.setStatus(2);
             activity.setRejectReason(null);
         } else {
-            // 驳回
-            activity.setStatus(1);
+            // 驳回 - 回到草稿状态，允许组织者修改后重新提交
+            activity.setStatus(0);
             activity.setRejectReason(rejectReason);
         }
 
@@ -237,12 +261,16 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         
         if (!stats.isEmpty()) {
             Map<String, Object> stat = stats.get(0);
-            result.put("totalCount", stat.get("totalCount") != null ? stat.get("totalCount") : 0);
-            result.put("approvedCount", stat.get("approvedCount") != null ? stat.get("approvedCount") : 0);
+            Object approvedCountObj = stat.get("approvedCount") != null ? stat.get("approvedCount") : 0;
+            Object totalCountObj = stat.get("totalCount") != null ? stat.get("totalCount") : 0;
+            
+            result.put("totalCount", totalCountObj);
+            result.put("approvedCount", approvedCountObj);
             result.put("pendingCount", stat.get("pendingCount") != null ? stat.get("pendingCount") : 0);
             result.put("rejectedCount", stat.get("rejectedCount") != null ? stat.get("rejectedCount") : 0);
-            long approved = Long.parseLong(result.get("approvedCount").toString());
-            long total = Long.parseLong(result.get("totalCount").toString());
+            
+            long approved = Long.parseLong(approvedCountObj.toString());
+            long total = Long.parseLong(totalCountObj.toString());
             result.put("approvalRate", total > 0 ? String.format("%.1f%%", (double) approved / total * 100) : "0%");
         } else {
             result.put("totalCount", 0);
