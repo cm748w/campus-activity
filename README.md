@@ -1,4 +1,4 @@
-### 老铁、请务必修改数据库的密码！
+### 老铁、请务使用自己的数据库密码！！！
 
 修改点：↓
 `backend/src/main/resources/application.yml`
