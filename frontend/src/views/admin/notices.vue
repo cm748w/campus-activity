@@ -109,8 +109,9 @@ const submitNotice = async () => {
   if (!valid) return
   submitLoading.value = true
   try {
-    const api = isEdit.value ? updateNotice : publishNotice
-    const res = await api(noticeForm.id, noticeForm)
+  const res = isEdit.value
+      ? await updateNotice(noticeForm.id, noticeForm)
+      : await publishNotice(noticeForm)
     if (res.code === 200) {
       ElMessage.success(isEdit.value ? '保存成功' : '发布成功')
       showDialog.value = false

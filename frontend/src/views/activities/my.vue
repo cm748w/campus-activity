@@ -171,8 +171,9 @@ const submitPublish = async () => {
   if (!valid) return
   publishLoading.value = true
   try {
-    const api = isEdit.value ? updateActivity : publishActivity
-    const res = await api(publishForm.id, publishForm)
+    const res = isEdit.value
+      ? await updateActivity(publishForm.id, publishForm)
+      : await publishActivity(publishForm)
     if (res.code === 200) {
       ElMessage.success(res.message || '操作成功')
       showPublishDialog.value = false
